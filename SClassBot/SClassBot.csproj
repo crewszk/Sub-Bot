@@ -188,6 +188,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommandHandler.cs" />
     <Compile Include="Modules\HelpModule.cs" />
     <Compile Include="Modules\CommandArguments.cs" />
     <Compile Include="Modules\InformationModule.cs" />

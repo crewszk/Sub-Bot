@@ -7,16 +7,6 @@ namespace SClassBot.Modules
 {
     public class InformationModule : ModuleBase<SocketCommandContext>
     {
-        private static readonly EmbedBuilder modBuilder = new EmbedBuilder()
-            .WithTitle("Currently Active Mods")
-            .WithDescription("This is a list of the current mods active in the server")
-            .WithAuthor(author =>
-            {
-                author
-                    .WithName("Mod List")
-                    .WithIconUrl("https://crewszk.github.io/images/botIcon.gif");
-            });
-
         private async Task EmbedReply(Embed embed)
         {
             await ReplyAsync("", false, embed);

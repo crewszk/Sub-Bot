@@ -201,7 +201,6 @@ namespace SClassBot.Modules
         public async Task Help()
         {
             await EmbedReply(helpEmbed);
-            
         }
 
         [Command("info")]    //When help is called for the 'mods' help page
