@@ -192,7 +192,7 @@
     <Compile Include="Modules\HelpModule.cs" />
     <Compile Include="Modules\CommandArguments.cs" />
     <Compile Include="Modules\InformationModule.cs" />
-    <Compile Include="Modules\KickModule.cs" />
+    <Compile Include="Modules\ModToolModule.cs" />
     <Compile Include="Modules\RandColor.cs" />
     <Compile Include="Modules\RequireRoleAttribute.cs" />
     <Compile Include="Program.cs" />

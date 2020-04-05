@@ -15,7 +15,7 @@ namespace SClassBot
         private readonly IServiceProvider _services;
         public Token ClientToken { get; }
 
-        public CommandHandler(DiscordSocketClient client, CommandService commands)
+        public CommandHandler(IServiceProvider services, DiscordSocketClient client, CommandService commands)
         {
             var keyPath = Path.Combine(Environment.CurrentDirectory, @"Resources\", "config.json");
             var keyString = File.ReadAllText(keyPath);
@@ -23,12 +23,13 @@ namespace SClassBot
             
             _commands = commands;
             _client = client;
+            _services = services;
         }
 
         public async Task InstallCommandsAsync()
         {
             _client.MessageReceived += HandleCommandAsync;
-            await _commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(), services: null);
+            await _commands.AddModulesAsync(assembly: Assembly.GetEntryAssembly(), services: _services);
         }
         
         private async Task HandleCommandAsync(SocketMessage messageParam)
@@ -49,7 +50,7 @@ namespace SClassBot
             await _commands.ExecuteAsync(
                 context: context,
                 argPos: 0,
-                services: null);
+                services: _services);
         }
     }
 }

@@ -31,7 +31,7 @@ namespace SClassBot
                 .AddSingleton(_commands)
                 .BuildServiceProvider();
             
-            commandHandler = new CommandHandler(_client, _commands);
+            commandHandler = new CommandHandler(_services, _client, _commands);
             
             _client.Log += Log;
 
@@ -47,7 +47,5 @@ namespace SClassBot
             Console.WriteLine(msg.ToString());
             return Task.CompletedTask;
         }
-
-        
     }
 }
