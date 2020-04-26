@@ -1,13 +1,9 @@
 ﻿using System;
-using System.IO;
-using System.Reflection;
-using System.Runtime.Remoting.Contexts;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
 using SClassBot.Modules;
 
 namespace SClassBot

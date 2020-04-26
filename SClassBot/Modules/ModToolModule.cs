@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Remoting;
-using System.Runtime.Remoting.Contexts;
 using System.Threading.Tasks;
-using System.Timers;
 using Discord;
 using Discord.Commands;
-using Discord.Rest;
 using Discord.WebSocket;
 
 namespace SClassBot.Modules
