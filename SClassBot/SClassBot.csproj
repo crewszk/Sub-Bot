@@ -192,9 +192,11 @@
     <Compile Include="Modules\HelpModule.cs" />
     <Compile Include="Modules\CommandArguments.cs" />
     <Compile Include="Modules\InformationModule.cs" />
+    <Compile Include="Modules\MemesModule.cs" />
     <Compile Include="Modules\ModToolModule.cs" />
-    <Compile Include="Modules\RandColor.cs" />
+    <Compile Include="Modules\RandomReferences.cs" />
     <Compile Include="Modules\RequireRoleAttribute.cs" />
+    <Compile Include="Modules\SocialModule.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Token.cs" />

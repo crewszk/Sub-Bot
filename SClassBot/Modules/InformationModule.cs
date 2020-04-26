@@ -12,24 +12,30 @@ namespace SClassBot.Modules
             await ReplyAsync("", false, embed);
         }
         
-        [Command("ping")]
+        [Command("s!ping")]
         public async Task Ping()
         {
             await ReplyAsync("Pong!");
         }
 
-        [Command("beep")]
+        [Command("s!pong")]
+        public async Task Pong()
+        {
+            await ReplyAsync("Ping!");
+        }
+
+        [Command("s!beep")]
         public async Task Beep()
         {
             await ReplyAsync("Boop!");
         }
 
-        [Command("bip")]
+        [Command("s!bip")]
         public async Task Bip()
         {
             await ReplyAsync("Bap!");
         }
-        
+
         
     }
 }

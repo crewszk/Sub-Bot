@@ -17,7 +17,7 @@ namespace SClassBot
         private DiscordSocketClient _client;
         private CommandService _commands;
         private IServiceProvider _services;
-        private CommandHandler commandHandler;
+        private CommandHandler _commandHandler;
         
         public static void Main(string[] args)
             => new Program().MainAsync().GetAwaiter().GetResult();
@@ -31,12 +31,13 @@ namespace SClassBot
                 .AddSingleton(_commands)
                 .BuildServiceProvider();
             
-            commandHandler = new CommandHandler(_services, _client, _commands);
+            _commandHandler = new CommandHandler(_services, _client, _commands);
             
             _client.Log += Log;
 
-            await commandHandler.InstallCommandsAsync();
-            await _client.LoginAsync(TokenType.Bot, commandHandler.ClientToken.BotToken);
+            await _commandHandler.InstallCommandsAsync();
+            RandomReferences.InitializeFiles();
+            await _client.LoginAsync(TokenType.Bot, CommandHandler.ClientToken.BotToken);
             await _client.StartAsync();
 
             await Task.Delay(-1);

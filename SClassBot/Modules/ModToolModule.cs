@@ -14,6 +14,8 @@ namespace SClassBot.Modules
 {
     public class ModToolModule : ModuleBase<SocketCommandContext>
     {
+        //private static string ModPrefix = CommandLoggingandTokenAccess.ClientToken.ModPrefix;
+        
         [Summary("Checks for a defined permission, posts embed to current channel if user lacks permissions")]
         private bool CheckPermissions(IGuildUser user, string permission)
         {
@@ -22,7 +24,8 @@ namespace SClassBot.Modules
                 "kick" => user.GuildPermissions.KickMembers,
                 "ban" => user.GuildPermissions.BanMembers,
                 "message" => user.GuildPermissions.ManageMessages,
-                "role" => user.GuildPermissions.ManageRoles
+                "role" => user.GuildPermissions.ManageRoles,
+                _ => false
             };
             
             var builder = new EmbedBuilder()
@@ -55,7 +58,7 @@ namespace SClassBot.Modules
         public async Task KickAsync(IGuildUser user = null, [Remainder]string kickReason = "No Reason Provided")
         {
             var guildUser = Context.Guild.GetUser(Context.User.Id);
-            if (!CheckPermissions(guildUser, "bane")) return;
+            if (!CheckPermissions(guildUser, "kick")) return;
             
             if (user == null)
             {
@@ -63,31 +66,11 @@ namespace SClassBot.Modules
                 return;
             }
             
+            var targetUser = (user as SocketGuildUser).Nickname ?? (user as SocketGuildUser).Username;
+            
             await user.KickAsync(kickReason);
 
-            var builder = new EmbedBuilder()
-                .WithTitle("Get kicked nerd!")
-                .WithDescription($"{user.Username} has been kicked from the {Context.Guild.Name}")
-                .WithCurrentTimestamp()
-                .WithColor(new Color(0, 255, 0))
-                .WithAuthor(author =>
-                {
-                    author
-                        .WithName("Sub-Bot Offense Mode")
-                        .WithIconUrl("https://crewszk.github.io/images/botIcon.gif");
-                })
-                .WithFooter(footer =>
-                {
-                    footer
-                        .WithText($"Command requested by {guildUser.Username}")
-                        .WithIconUrl(guildUser.GetAvatarUrl());
-                })
-                .AddField("User", $"{user.Mention}", true)
-                .AddField("Moderator", $"{Context.User.Username}", true)
-                .AddField("Other Information", "Kick Request means can be invited back")
-                .AddField("Command Used", $"``s@kick {user.Username} \"{kickReason}\"``");
-
-            await ReplyAsync("", false, builder.Build());
+            await BotLogAsync(guildUser, "s@kick", $"decided to kick ***{targetUser}***.", kickReason);
         }
 
         [Command("s@ban")]
@@ -104,31 +87,11 @@ namespace SClassBot.Modules
                 return;
             }
             
-            await user.BanAsync(7, banReason);
+            var targetUser = (user as SocketGuildUser).Nickname ?? (user as SocketGuildUser).Username;
             
-            var builder = new EmbedBuilder()
-                .WithTitle("Get banned nerd!")
-                .WithDescription($"{user.Username} has been banned from {Context.Guild.Name}")
-                .WithCurrentTimestamp()
-                .WithColor(new Color(0, 255, 0))
-                .WithAuthor(author =>
-                {
-                    author
-                        .WithName("Sub-Bot Offense Mode")
-                        .WithIconUrl("https://crewszk.github.io/images/botIcon.gif");
-                })
-                .WithFooter(footer =>
-                {
-                    footer
-                        .WithText($"Command requested by {guildUser.Username}")
-                        .WithIconUrl(guildUser.GetAvatarUrl());
-                })
-                .AddField("User", $"{user.Mention}")
-                .AddField("Moderator", $"{Context.User.Mention}")
-                .AddField("Other Information", "A Ban means no return until further notice")
-                .AddField("Command Used", $"``s@ban {user.Mention} \"{banReason}\"``");
+            await user.BanAsync(7, banReason);
 
-            await ReplyAsync("", false, builder.Build());
+            await BotLogAsync(guildUser, "s@ban", $"decided to ban ***{targetUser}***.", banReason);
         }
 
         [Command("s@mute")]
@@ -145,53 +108,25 @@ namespace SClassBot.Modules
                 return;
             }
             
+            var targetUser = (user as SocketGuildUser).Nickname ?? (user as SocketGuildUser).Username;
             var role = Context.Guild.Roles.FirstOrDefault(x => x.Name == "Muted");
             await user.AddRoleAsync(role);
 
-            var builder = new EmbedBuilder()
-                .WithTitle("Get muted bitch")
-                .WithDescription($"{user.Mention} has been muted for {time} minute(s).")
-                .WithColor(new Color(0, 255, 0))
-                .WithCurrentTimestamp()
-                .WithAuthor(author =>
-                {
-                    author
-                        .WithName("Sub-Bot Offense Mode")
-                        .WithIconUrl("https://crewszk.github.io/images/botIconSpooky.gif");
-                })
-                .WithFooter(footer =>
-                {
-                    footer
-                        .WithText($"Command requested by {guildUser.Username}")
-                        .WithIconUrl(guildUser.GetAvatarUrl());
-                });
-
-            await ReplyAsync("", false, builder.Build());
-
-            await Task.Delay(TimeSpan.FromMinutes(time)).ContinueWith(t => RemoveMuteSend(user, guildUser, Context.Channel, role));
+            await BotLogAsync(guildUser, "s@mute",
+                $"decided to mute **{targetUser}** in {(Context.Channel as SocketTextChannel).Mention}.\n" +
+                $"They have been muted for {time} minute(s)");
+            
+            Task.Delay(TimeSpan.FromMinutes(time)).ContinueWith(t => 
+                RemoveMuteSend(user, Context.Guild.GetTextChannel(CommandHandler.ClientToken.GuildChannels.BotLog), role));
         }
 
         [Summary("Helper Task for timed delay of removing the 'Muted' role")]
-        private static async Task RemoveMuteSend(IGuildUser user, IUser guildUser, ISocketMessageChannel channel, IRole role)
+        private static async Task RemoveMuteSend(IGuildUser user, ISocketMessageChannel channel, IRole role)
         {
+            var targetUser = user.Nickname ?? user.Username;
             var builder = new EmbedBuilder()
-                .WithTitle("Unmuted")
-                .WithDescription($"{user.Username} has been unmuted for now")
-                .WithColor(new Color(RandColor.NewColor()))
-                .WithCurrentTimestamp()
-                .WithAuthor(author =>
-                {
-                    author
-                        .WithName("Infraction Cleared")
-                        .WithIconUrl("https://crewszk.github.io/images/botIcon.gif")
-                        .WithUrl("https://github.com/crewszk/Sub-Bot");
-                })
-                .WithFooter(footer =>
-                {
-                    footer
-                        .WithText($"Command originally requested by {guildUser.Username}")
-                        .WithIconUrl(guildUser.GetAvatarUrl());
-                });
+                .WithDescription($"**{targetUser}** has been un-muted.")
+                .WithColor(new Color(RandomReferences.NewColor()));
 
             await user.RemoveRoleAsync(role);
 
@@ -201,60 +136,98 @@ namespace SClassBot.Modules
         [Command("s@prune")]
         [Priority(4)]
         [Summary("Prune a given amount of messages, default is most recent message")]
-        public async Task PruneAsync(uint count = 1)
+        public async Task PruneAsync(int count = 1)
         {
             var guildUser = Context.Guild.GetUser(Context.User.Id);
             if (!CheckPermissions(guildUser, "message")) return;
             
-            var messages = await Context.Channel.GetMessagesAsync((int)count + 1).FlattenAsync();
+            //Limit of 100 messages to prune, minimum 1 message
+            if (count > 100) count = 99;
+            else if (count <= 0) count = 1;
+            
+            var messages = await Context.Channel.GetMessagesAsync(count + 1).FlattenAsync();
+            
+            await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages.Skip(1));
 
-            messages = messages.Skip(1);
-            await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
+            await BotLogAsync(guildUser, "s@prune",
+                $"pruned {count} message(s) in {(Context.Channel as SocketTextChannel).Mention}.\n" +
+                "The messages were made by various users.");
         }
 
         [Command("s@prune")]
         [Priority(3)]
         [Summary("Prune a given amount of messages of a given user")]
-        public async Task PruneAsync(uint count, IGuildUser user)
+        public async Task PruneAsync(int count, IGuildUser user)
         {
             var guildUser = Context.Guild.GetUser(Context.User.Id);
+            var targetUser = (user as SocketGuildUser).Nickname ?? (user as SocketGuildUser).Username;
             if (!CheckPermissions(guildUser, "message")) return;
             
-            var messages = await Context.Channel.GetMessagesAsync(100).FlattenAsync();
+            //Limit of 100 messages to prune, minimum 1 message
+            if (count > 100) count = 99;
+            else if (count <= 0) count = 1;
+            
+            var messages = 
+                from msg in await Context.Channel.GetMessagesAsync(100).FlattenAsync()
+                where msg.Author == user
+                select msg;
+            
+            await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages.Take(count));
 
-            messages = from msg in messages where msg.Author == user select msg;
-
-            messages = messages.Take((int)count);
-            await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
+            await BotLogAsync(guildUser, "s@prune",
+                $"pruned {count} message(s) in {(Context.Channel as SocketTextChannel).Mention}.\n" +
+                $"The messages were made by **{targetUser}**.");
         }
 
         [Command("s@prune")]
         [Priority(3)]
         [Summary("Prune a given amount of messages defined by a flag")]
-        public async Task PruneAsync(uint count, string flag)
+        public async Task PruneAsync(int count, string flag)
         {
             var guildUser = Context.Guild.GetUser(Context.User.Id);
             if (!CheckPermissions(guildUser, "message")) return;
             
-            var messages = await Context.Channel.GetMessagesAsync(100).FlattenAsync();
+            //Limit of 100 messages to prune, minimum 1 message
+            if (count > 100) count = 99;
+            else if (count <= 0) count = 1;
             
-            messages = HandleFlagAsync(messages, flag, count);
+            var messages = HandleFlagAsync(await Context.Channel.GetMessagesAsync(100).FlattenAsync(), flag, count);
+            
             await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
+
+            await BotLogAsync(guildUser, "s@prune",
+                $"pruned {count} message(s) in {(Context.Channel as SocketTextChannel).Mention} with the flag \"{flag}\".\n" +
+                "The messages were made by various users");
         }
 
         [Command("s@prune")]
         [Priority(2)]
         [Summary("Prune a given amount of messages, defined by a flag, of a given user ")]
-        public async Task PruneAsync(uint count, IGuildUser user, string flag)
+        public async Task PruneAsync(int count, IGuildUser user, string flag)
         {
             var guildUser = Context.Guild.GetUser(Context.User.Id);
+            var targetUser = (user as SocketGuildUser).Nickname ?? (user as SocketGuildUser).Username;
             if (!CheckPermissions(guildUser, "message")) return;
             
-            var messages = await Context.Channel.GetMessagesAsync(100).FlattenAsync();
-            messages = from msg in messages where msg.Author == user select msg;
+            //Limit of 100 messages to prune, minimum 1 message
+            if (count > 100) count = 99;
+            else if (count <= 0) count = 1;
             
-            messages = HandleFlagAsync(messages, flag, count);
+            var messages =
+                HandleFlagAsync(
+                    from msg in await Context.Channel.GetMessagesAsync(100).FlattenAsync()
+                        where msg.Author == user
+                        select msg, flag, count);
+
+            //When the message to be pruned is made by the command user, skip ahead once so the command input doesn't get targeted
+            if (Context.User == user)
+                messages = messages.Skip(1);
+            
             await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
+
+            await BotLogAsync(guildUser, "s@prune",
+                $"pruned {count} message(s) in {(Context.Channel as SocketTextChannel).Mention} with the flag \"{flag}\".\n" +
+                $"The messages were made by **{targetUser}**.");
         }
 
         [Command("s@prune")]
@@ -263,14 +236,23 @@ namespace SClassBot.Modules
         public async Task PruneAsync(IGuildUser user)
         {
             var guildUser = Context.Guild.GetUser(Context.User.Id);
+            var targetUser = (user as SocketGuildUser).Nickname ?? (user as SocketGuildUser).Username;
             if (!CheckPermissions(guildUser, "message")) return;
-            
-            var messages = await Context.Channel.GetMessagesAsync(100).FlattenAsync();
-            messages = from msg in messages where msg.Author == user select msg;
 
-            messages = messages.Take(1);
-            await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
+            var messages = 
+                from msg in await Context.Channel.GetMessagesAsync(100).FlattenAsync()
+                    where msg.Author == user
+                    select msg;
+            
+            //When the message to be pruned is made by the command user, skip ahead once so the command input doesn't get targeted
+            if (Context.User == user)
+                messages = messages.Skip(1);
+
+            await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages.Take(1));
         
+            await BotLogAsync(guildUser, "s@prune",
+                $"pruned 1 message in {(Context.Channel as SocketTextChannel).Mention}.\n" +
+                $"The message was made by **{targetUser}**.");
         }
 
         [Command("s@prune")]
@@ -280,32 +262,61 @@ namespace SClassBot.Modules
         {
             var guildUser = Context.Guild.GetUser(Context.User.Id);
             if (!CheckPermissions(guildUser, "message")) return;
-
-            var messages = await Context.Channel.GetMessagesAsync(100).FlattenAsync();
-            messages = HandleFlagAsync(messages, flag, 1);
+            
+            //Return as list for multiple enumerations
+            var messages = 
+                HandleFlagAsync(await Context.Channel.GetMessagesAsync(100).FlattenAsync(), flag, 1).ToList();
+            
             await (Context.Channel as SocketTextChannel).DeleteMessagesAsync(messages);
+
+            var targetUser = (messages[0].Author as SocketGuildUser).Nickname ?? (messages[0].Author as SocketGuildUser).Username;
+            
+            await BotLogAsync(guildUser, "s@prune",
+             $"pruned 1 message in {(Context.Channel as SocketTextChannel).Mention} with the flag \"{flag}\".\n" +
+             $"The message was made by **{targetUser}**.");
         }
         
-        [Summary("Helper method for handling flags in the pruning process, returns a IMessage list of messages " +
-                 "that contain the provided flag")]
-        private static IEnumerable<IMessage> HandleFlagAsync(IEnumerable<IMessage> messages, string flag, uint count)
+        [Summary("Helper method for handling flags in the pruning process, returns a IMessage list of messages" +
+                 "that contain the provided flag. If the flag isn't a special keyword, it skips the Authors message" +
+                 "to preserve the prune command")]
+        private static IEnumerable<IMessage> HandleFlagAsync(IEnumerable<IMessage> messages, string flag, int count)
         {
-            messages = flag switch
+            return flag switch
             {
-                "-images" => (from msg in messages where msg.Attachments.Any() select msg),
-                "-image" => (from msg in messages where msg.Attachments.Any() select msg),
-                "-i" => (from msg in messages where msg.Attachments.Any() select msg),
-                "-mentions" => (from msg in messages where msg.MentionedUserIds.Any() select msg),
-                "-mention" => (from msg in messages where msg.MentionedUserIds.Any() select msg),
-                "-m" => (from msg in messages where msg.MentionedUserIds.Any() select msg),
-                "-links" => (from msg in messages where msg.Content.Contains("http") select msg),
-                "-link" => (from msg in messages where msg.Content.Contains("http") select msg),
-                "-l" => (from msg in messages where msg.Content.Contains("http") select msg),
-                _ => (from msg in messages where msg.Content.Contains(flag) select msg)
+                "-images" => (from msg in messages where msg.Attachments.Any() select msg).Take(count),
+                "-image" => (from msg in messages where msg.Attachments.Any() select msg).Take(count),
+                "-i" => (from msg in messages where msg.Attachments.Any() select msg).Take(count),
+                "-mentions" => (from msg in messages where msg.MentionedUserIds.Any() select msg).Take(count),
+                "-mention" => (from msg in messages where msg.MentionedUserIds.Any() select msg).Take(count),
+                "-m" => (from msg in messages where msg.MentionedUserIds.Any() select msg).Take(count),
+                "-links" => (from msg in messages where msg.Content.Contains("http") select msg).Take(count),
+                "-link" => (from msg in messages where msg.Content.Contains("http") select msg).Take(count),
+                "-l" => (from msg in messages where msg.Content.Contains("http") select msg).Take(count),
+                _ => (from msg in messages where msg.Content.Contains(flag) select msg).Take(count)
             };
+        }
 
-            messages = messages.Take((int)count);
-            return messages;
+        [Summary("Logging method for logging bot command outcomes for mod commands inside a specified command channel")]
+        private async Task BotLogAsync(IGuildUser user, string command, string context, string reason = null)
+        {
+            var targetUser = user.Nickname ?? user.Username;
+            var avatar = user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl();
+            
+            var builder = new EmbedBuilder()
+                .WithDescription($"**{targetUser}** {context}")
+                .WithFooter(footer =>
+                {
+                    footer
+                        .WithText($"Command requested by {targetUser}")
+                        .WithIconUrl(avatar);
+                })
+                .WithColor(new Color(RandomReferences.NewColor()));
+
+            if (reason != null)
+                builder.AddField("*Reason*", $"{reason}", true);
+
+            await Context.Guild.GetTextChannel(CommandHandler.ClientToken.GuildChannels.BotLog)
+                .SendMessageAsync("", false, builder.Build());
         }
     }
 }
