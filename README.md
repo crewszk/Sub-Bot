@@ -4,7 +4,7 @@
 My plan with Sub-Bot is to create a Discord.NET based bot client that houses various commands and ideas from popular bots, 
 as well as plenty of ideas of my own. I want it to do it all.
 
-##Versions
+## Versions
 
 ### v0.6 (Future) TO DO LIST
     - Music integration
